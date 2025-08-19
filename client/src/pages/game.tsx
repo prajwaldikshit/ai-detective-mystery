@@ -1,5 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { useGame } from '@/hooks/useGame';
+import type { GameState, Mystery } from '@shared/schema';
 import { GameBoard } from '@/components/game/GameBoard';
 import { SuspectPanel } from '@/components/game/SuspectPanel';
 import { EvidenceLog } from '@/components/game/EvidenceLog';
@@ -13,18 +14,191 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+// Sample demo mystery data
+const createDemoGameState = (): GameState => ({
+  id: 'demo',
+  roomCode: 'DEMO01',
+  hostId: 'demo-user',
+  phase: 'investigation' as const,
+  mystery: {
+    id: 'demo-mystery',
+    title: 'The Midnight Manor Murder',
+    setting: 'Victorian Manor House',
+    victim: {
+      name: 'Lord Blackwood',
+      description: 'Wealthy estate owner in his 60s',
+      background: 'Recently changed his will, causing family tensions'
+    },
+    crimeScene: 'Lord Blackwood was found dead in his study, apparently poisoned during his evening brandy.',
+    suspects: [
+      {
+        id: 'suspect-1',
+        name: 'Lady Margaret Blackwood',
+        role: 'Wife',
+        description: 'Elegant woman in her 50s, recently discovered husband\'s affair',
+        motive: 'Inheritance and revenge for husband\'s infidelity',
+        alibi: 'Claims she was in the garden reading',
+        imageUrl: ''
+      },
+      {
+        id: 'suspect-2', 
+        name: 'Dr. Harrison Wells',
+        role: 'Family Doctor',
+        description: 'The family physician for 20 years, recently in debt',
+        motive: 'Lord Blackwood threatened to expose his gambling debts',
+        alibi: 'Says he was checking on a patient in town',
+        imageUrl: ''
+      },
+      {
+        id: 'suspect-3',
+        name: 'James Blackwood',
+        role: 'Son and Heir',
+        description: 'Rebellious son who was recently disinherited',
+        motive: 'Father cut him out of the will after a business scandal',
+        alibi: 'Claims he was at the local pub until midnight',
+        imageUrl: ''
+      },
+      {
+        id: 'suspect-4',
+        name: 'Mrs. Eleanor Price',
+        role: 'Housekeeper',
+        description: 'Loyal servant for 30 years, knows all family secrets',
+        motive: 'Lord Blackwood discovered she was stealing money',
+        alibi: 'Says she was cleaning the kitchen after dinner',
+        imageUrl: ''
+      }
+    ],
+    evidence: [
+      {
+        id: 'evidence-1',
+        title: 'Poisoned Brandy Glass',
+        description: 'Crystal glass containing traces of arsenic found on the desk',
+        room: 'Study',
+        significance: 'critical' as const,
+        isRedHerring: false
+      },
+      {
+        id: 'evidence-2',
+        title: 'Threatening Letter',
+        description: 'Anonymous letter threatening Lord Blackwood found in his desk drawer',
+        room: 'Study',
+        significance: 'high' as const,
+        isRedHerring: false
+      },
+      {
+        id: 'evidence-3',
+        title: 'Medical Prescription',
+        description: 'Prescription bottle for heart medication, recently refilled',
+        room: 'Study',
+        significance: 'medium' as const,
+        isRedHerring: false
+      },
+      {
+        id: 'evidence-4',
+        title: 'Muddy Footprints',
+        description: 'Fresh muddy footprints leading from the garden to the study',
+        room: 'Study',
+        significance: 'medium' as const,
+        isRedHerring: true
+      }
+    ],
+    rooms: [
+      {
+        id: 'study',
+        name: 'Study',
+        description: 'Dark wood-paneled room with a large desk and fireplace',
+        evidence: ['evidence-1', 'evidence-2', 'evidence-3', 'evidence-4'],
+        hasBeenExplored: true
+      },
+      {
+        id: 'library',
+        name: 'Library',
+        description: 'Vast collection of books with comfortable reading chairs',
+        evidence: [],
+        hasBeenExplored: false
+      },
+      {
+        id: 'kitchen',
+        name: 'Kitchen',
+        description: 'Large Victorian kitchen with modern cooking equipment',
+        evidence: [],
+        hasBeenExplored: false
+      },
+      {
+        id: 'garden',
+        name: 'Garden',
+        description: 'Beautifully maintained garden with herb and flower beds',
+        evidence: [],
+        hasBeenExplored: false
+      }
+    ],
+    murderer: {
+      suspectId: 'suspect-2',
+      method: 'Poisoned the brandy with arsenic from medical supplies',
+      confession: 'I had no choice! He was going to ruin me, expose my debts to everyone. I used my medical knowledge to make it look natural...',
+      alternateEnding: 'Without the detectives\' sharp minds, Dr. Wells would have gotten away with the perfect murder, covering it up as a heart attack.'
+    },
+    difficulty: 'medium' as const
+  },
+  participants: [
+    {
+      id: 'demo-participant',
+      gameId: 'demo',
+      userId: 'demo-user',
+      username: 'Detective Demo',
+      isReady: true,
+      vote: null,
+      score: 0
+    }
+  ],
+  messages: [
+    {
+      id: 'demo-message-1',
+      gameId: 'demo',
+      userId: 'demo-user',
+      username: 'Detective Demo',
+      message: 'This is what the team chat looks like during investigation!',
+      timestamp: new Date()
+    }
+  ],
+  discoveredEvidence: [
+    {
+      id: 'demo-discovered-1',
+      gameId: 'demo',
+      userId: 'demo-user',
+      evidenceId: 'evidence-1',
+      room: 'Study',
+      discoveredAt: new Date()
+    },
+    {
+      id: 'demo-discovered-2',
+      gameId: 'demo',
+      userId: 'demo-user',
+      evidenceId: 'evidence-2',
+      room: 'Study', 
+      discoveredAt: new Date()
+    }
+  ],
+  timeRemaining: 480, // 8 minutes remaining
+  votes: {},
+  phaseStartTime: Date.now()
+});
+
 export default function Game() {
   const { gameId } = useParams();
   const [, navigate] = useLocation();
-  const { gameState, connected } = useGame();
+  const { gameState: realGameState, connected } = useGame();
   const [selectedClue, setSelectedClue] = useState<any>(null);
+  
+  // Use demo data if gameId is 'demo', otherwise use real game state
+  const gameState = gameId === 'demo' ? createDemoGameState() : realGameState;
 
   useEffect(() => {
-    if (!gameState && connected) {
-      // If no game state and connected, redirect to home
+    if (!gameState && connected && gameId !== 'demo') {
+      // If no game state and connected, redirect to home (unless it's demo mode)
       navigate('/');
     }
-  }, [gameState, connected, navigate]);
+  }, [gameState, connected, navigate, gameId]);
 
   if (!gameState) {
     return (

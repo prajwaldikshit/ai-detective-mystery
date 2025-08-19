@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useGame } from '@/hooks/useGame';
 import { motion } from 'framer-motion';
-import { Search, Plus, DoorOpen, Trophy, User, Users, Target } from 'lucide-react';
+import { Search, Plus, DoorOpen, Trophy, User, Users, Target, Play } from 'lucide-react';
 
 export default function Home() {
   const [, navigate] = useLocation();
@@ -47,6 +47,11 @@ export default function Home() {
   const handleLeaderboardClick = () => {
     // Placeholder for leaderboard functionality
     alert('Leaderboard feature coming soon! This will show top detective rankings.');
+  };
+
+  const handleDemoClick = () => {
+    // Navigate to demo page with sample mystery data
+    navigate('/game/demo');
   };
 
   return (
@@ -154,6 +159,16 @@ export default function Home() {
               >
                 <DoorOpen className="mr-3 h-5 w-5" />
                 Join Game
+              </Button>
+              
+              <Button
+                onClick={handleDemoClick}
+                variant="outline"
+                className="px-8 py-4 bg-noir-darker border-2 border-neon-green rounded-xl font-semibold text-lg hover:bg-neon-green hover:text-noir-dark transition-all duration-300 transform hover:scale-105"
+                data-testid="button-demo"
+              >
+                <Play className="mr-3 h-5 w-5" />
+                View Demo
               </Button>
             </motion.div>
           ) : (
