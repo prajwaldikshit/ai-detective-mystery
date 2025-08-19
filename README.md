@@ -2,6 +2,8 @@
 
 A real-time multiplayer detective mystery game where players collaborate to solve AI-generated murder mysteries. Built with React, Express.js, and powered by OpenAI.
 
+This project was personally developed by Prajwal Dikshit and Vibudhan Dubey as part of our MCA learning journey.
+
 ## 🎮 Features
 
 - **AI-Generated Mysteries**: Each game features unique murder cases created by OpenAI
