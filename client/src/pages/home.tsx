@@ -33,7 +33,20 @@ export default function Home() {
     if (!username.trim() || !roomCode.trim()) return;
     const userId = `user_${Date.now()}_${Math.random()}`;
     authenticate(userId, username.trim());
-    joinGame(roomCode.toUpperCase());
+    // Small delay to ensure authentication completes
+    setTimeout(() => {
+      joinGame(roomCode.toUpperCase());
+    }, 100);
+  };
+
+  const handleProfileClick = () => {
+    // Placeholder for profile functionality
+    alert('Profile feature coming soon! This will show your game stats and achievements.');
+  };
+
+  const handleLeaderboardClick = () => {
+    // Placeholder for leaderboard functionality
+    alert('Leaderboard feature coming soon! This will show top detective rankings.');
   };
 
   return (
@@ -53,6 +66,7 @@ export default function Home() {
             </motion.div>
             <div className="flex items-center space-x-4">
               <Button 
+                onClick={handleProfileClick}
                 variant="ghost" 
                 className="hover:bg-noir-lighter"
                 data-testid="button-profile"
@@ -61,6 +75,7 @@ export default function Home() {
                 Profile
               </Button>
               <Button 
+                onClick={handleLeaderboardClick}
                 variant="ghost" 
                 className="bg-neon-purple hover:bg-neon-purple/80 hover-glow"
                 data-testid="button-leaderboard"

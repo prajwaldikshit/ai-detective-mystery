@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { gameService } from "./services/gameService";
+import { storage } from "./storage";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -249,13 +250,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/games/room/:roomCode', async (req, res) => {
     try {
       const { roomCode } = req.params;
-      const game = await gameService.getGameState(roomCode);
+      const game = await storage.getGameByRoomCode(roomCode);
       
       if (!game) {
         return res.status(404).json({ message: 'Game not found' });
       }
 
-      res.json(game);
+      const gameState = await storage.getGameState(game.id);
+      res.json(gameState);
     } catch (error) {
       console.error('Get game by room code error:', error);
       res.status(500).json({ message: 'Failed to get game' });
