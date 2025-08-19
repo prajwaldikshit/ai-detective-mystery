@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,9 +16,11 @@ export default function Home() {
   const { createGame, joinGame, authenticate, gameState, loading, connected } = useGame();
 
   // Auto-navigate when game state changes
-  if (gameState) {
-    navigate(`/lobby/${gameState.id}`);
-  }
+  useEffect(() => {
+    if (gameState) {
+      navigate(`/lobby/${gameState.id}`);
+    }
+  }, [gameState, navigate]);
 
   const handleCreateGame = async () => {
     if (!username.trim()) return;
